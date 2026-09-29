@@ -1,0 +1,7 @@
+# Personal workshop context
+/devpost/learner-profile.md
+
+# Local credentials and environment files
+.env
+.env.*
+!.env.example
