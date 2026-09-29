@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wild Wolves Agenda Bridge — Technical Spec</title>
+<style>
+:root{--bg:#f7f7f4;--fg:#1d2330;--mut:#5b6474;--card:#fff;--line:#d9dbe1;--acc:#2f5fd0;--acc2:#e8eefc;--ok:#1f7a4d}
+@media (prefers-color-scheme:dark){:root{--bg:#141821;--fg:#e8eaf0;--mut:#9aa3b5;--card:#1c2230;--line:#2c3446;--acc:#7fa4ff;--acc2:#232c44;--ok:#5fd39a}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,Segoe UI,sans-serif}
+main{max-width:860px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:1.7rem;margin:.2em 0}h2{margin-top:2em;border-bottom:1px solid var(--line);padding-bottom:.2em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:12px 0}
+code{background:var(--acc2);padding:1px 5px;border-radius:4px;font-size:.92em}
+pre{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto}
+.badge{display:inline-block;background:var(--acc2);color:var(--acc);border-radius:99px;padding:1px 10px;font-size:.8rem;margin-left:6px}
+.steps{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.steps button{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:99px;padding:6px 12px;cursor:pointer;font:inherit}
+.steps button[aria-pressed=true]{background:var(--acc);color:#fff;border-color:var(--acc)}
+#stepbox{min-height:5em}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:8px 0}
+summary{cursor:pointer;font-weight:600}
+svg text{fill:var(--fg);font:13px system-ui}svg .box{fill:var(--card);stroke:var(--acc);stroke-width:1.5}svg .hl{fill:var(--acc2);stroke:var(--acc);stroke-width:3}
+svg path,svg line{stroke:var(--mut);stroke-width:1.5;fill:none}
+table{border-collapse:collapse;width:100%}td,th{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+.muted{color:var(--mut)}
+</style>
+</head>
+<body><main>
+<h1>Wild Wolves Agenda Bridge <span class="badge">Technical Spec · approved</span></h1>
+<p class="muted">Canonical version: <code>devpost/spec.md</code>. This page is a visual companion and works offline.</p>
+
+<h2>How this works, in plain language</h2>
+<div class="card">
+<p>One Python program you start by hand. It asks <b>Discord</b> for the Wild Wolves scheduled events in the next 7 days (using a small read-only <b>bot</b>), asks <b>Outlook</b> what is already on your calendar, drops events that are already there (same name <i>and</i> same start time), and adds the rest as <b>tentative</b> items. Then it prints the list. You decide in Outlook.</p>
+<p>Outlook itself is the program's memory, so running twice never makes duplicates.</p>
+</div>
+
+<h2>The picture</h2>
+<svg viewBox="0 0 800 250" width="100%" role="img" aria-label="Diagram: main.py talks to Discord and Outlook">
+<rect class="box" x="20" y="20" width="170" height="60" rx="8"/><text x="105" y="55" text-anchor="middle">Discord (bot token)</text>
+<rect class="box" x="20" y="170" width="170" height="60" rx="8"/><text x="105" y="205" text-anchor="middle">Outlook (Microsoft Graph)</text>
+<rect class="hl" x="330" y="95" width="180" height="60" rx="8"/><text x="420" y="130" text-anchor="middle">main.py (you run it)</text>
+<rect class="box" x="620" y="20" width="160" height="60" rx="8"/><text x="700" y="55" text-anchor="middle">Terminal list</text>
+<rect class="box" x="620" y="170" width="160" height="60" rx="8"/><text x="700" y="205" text-anchor="middle">Tentative items</text>
+<path d="M190 50 L330 115"/><text x="215" y="70" font-size="11">1 events, next 7 days</text>
+<path d="M190 200 L330 135"/><text x="215" y="190" font-size="11">2 existing items</text>
+<path d="M510 115 L620 55"/><text x="520" y="70" font-size="11">4 print new events</text>
+<path d="M510 135 L620 195"/><text x="520" y="190" font-size="11">3 create tentative</text>
+</svg>
+
+<h2>The core journey — click through it</h2>
+<p class="muted">PRD ref: <code>prd.md &gt; The Core Journey</code></p>
+<div class="steps" id="steps"></div>
+<div class="card" id="stepbox"></div>
+
+<h2>Components <span class="muted" style="font-size:.9rem">(click to open)</span></h2>
+<details><summary>main.py — entry point and duplicate rule</summary>
+<p>Runs the steps in order, holds the rule "same name (ignoring capitals/spaces) + same start time in UTC = already there", prints results and plain error messages.</p>
+<p class="muted">PRD: Run on demand · Skipping events already in Outlook · Result list · States and Boundaries</p></details>
+<details><summary>discord_events.py — Discord reader</summary>
+<p><code>GET /api/v10/guilds/{guild_id}/scheduled-events</code> with <code>Authorization: Bot …</code>. Keeps events starting in the next 7 days; location from the event's location text or the channel name.</p>
+<p class="muted">PRD: Finding events (next 7 days)</p></details>
+<details><summary>outlook_calendar.py — Outlook via Microsoft Graph</summary>
+<p>Sign-in with <code>msal</code> (browser once, token saved). Reads <code>/me/calendarView</code> for the window; creates events via <code>POST /me/events</code> with <code>showAs: "tentative"</code>. End time defaults to start + 1 hour.</p>
+<p class="muted">PRD: Skipping events already in Outlook · Creating tentative Outlook items</p></details>
+<details><summary>config.py — settings</summary>
+<p>Loads <code>.env</code> (bot token, server ID, Microsoft app ID) and stops with a clear message if something is missing. Secrets never go into chat or GitHub.</p>
+<p class="muted">PRD: States and Boundaries</p></details>
+<details><summary>tests/test_dedupe.py — duplicate-rule checks</summary>
+<p>Same name + same time is skipped; same name + different time is kept.</p></details>
+
+<h2>Files</h2>
+<pre>Build with AI Basics/
+├── main.py              # start here
+├── discord_events.py    # asks Discord
+├── outlook_calendar.py  # Microsoft sign-in, read, create
+├── config.py            # loads .env
+├── tests/test_dedupe.py
+├── requirements.txt     # requests, msal, python-dotenv, pytest
+├── .env.example         # names only (public)
+├── .env                 # real secrets (git-ignored)
+├── .token_cache.json    # Microsoft token (git-ignored)
+├── .gitignore
+├── README.md
+└── devpost/</pre>
+
+<h2>Stack and where it runs</h2>
+<div class="card">
+<p>Python 3.11+, <code>requests</code>, <code>msal</code>, <code>python-dotenv</code>, <code>pytest</code>. Runs locally on your Windows laptop: <code>python main.py</code>. The required demo video and public GitHub repo don't need hosting.</p>
+<p>Docs:
+<a href="https://discord.com/developers/docs/resources/guild-scheduled-event">Discord scheduled events</a> ·
+<a href="https://learn.microsoft.com/graph/api/user-list-calendarview">Graph calendarView</a> ·
+<a href="https://learn.microsoft.com/graph/api/user-post-events">Graph create event</a> ·
+<a href="https://learn.microsoft.com/entra/msal/python/">msal</a> ·
+<a href="https://requests.readthedocs.io/">requests</a></p>
+</div>
+
+<h2>What could go wrong</h2>
+<table>
+<tr><th>Problem</th><th>You see</th></tr>
+<tr><td>Discord unreachable / bot not in server</td><td>"Discord is not available. Nothing was created."</td></tr>
+<tr><td>Outlook sign-in or Graph fails</td><td>"Outlook is not available. Nothing was created."</td></tr>
+<tr><td>Nothing new</td><td>"No new events found."</td></tr>
+<tr><td>Event has no description/location</td><td>Item still created, those fields empty</td></tr>
+</table>
+
+<h2>Simplified on purpose</h2>
+<ul>
+<li>Run by hand, not a daily 20:00 schedule.</li>
+<li>Outlook is the only memory — no database.</li>
+<li>Local run + recording, no hosting.</li>
+<li>Test server first; Wild Wolves later by changing the server ID.</li>
+<li>Moved events count as new.</li>
+</ul>
+
+<h2>Decisions and open items</h2>
+<div class="card">
+<p><b>Your choices:</b> personal Outlook account · no personal-login scraping (a bot instead) · both a test server and an admin request · run locally · Python with plain requests + Graph/msal.</p>
+<p><b>Your uncertainty:</b> bots must be added by someone with server rights. Clarified in conversation; proven in the build when the bot lists the test server's events.</p>
+<p><b>To check early in the build:</b></p>
+<ul>
+<li>Accept/decline: on an item you create yourself, "accept" = change tentative → busy, "decline" = delete.</li>
+<li>Exact bot permission needed; how recurring Discord events appear.</li>
+<li>Whether a Wild Wolves admin adds the bot.</li>
+<li>Current versions of <code>msal</code>/<code>requests</code>; Python 3.11+ installed.</li>
+</ul>
+</div>
+
+<script>
+var S=[
+["You run it","<code>python main.py</code>. One full check, then it ends. Nothing scheduled.","Run on demand"],
+["Settings load","Bot token, server ID and Microsoft app ID are read from your private <code>.env</code>.","States and Boundaries"],
+["Ask Discord","<code>discord_events.py</code> fetches scheduled events and keeps those starting in the next 7 days.","Finding events (next 7 days)"],
+["Ask Outlook","<code>outlook_calendar.py</code> lists your calendar items in the same window. First run: browser sign-in.","Skipping events already in Outlook"],
+["Compare","Same name and same start time as an Outlook item? Skip it silently.","Skipping events already in Outlook"],
+["Create","Each remaining event becomes a tentative Outlook item with title, time, description, location.","Creating tentative Outlook items"],
+["Print","The new events are listed, or 'No new events found.', or a 'not available' message.","Result list"],
+["You decide","Open Outlook: keep (make busy) or remove each tentative item.","Creating tentative Outlook items"]];
+var st=document.getElementById('steps'),bx=document.getElementById('stepbox');
+function show(i){[].forEach.call(st.children,function(b,j){b.setAttribute('aria-pressed',i===j)});
+bx.innerHTML='<b>'+(i+1)+'. '+S[i][0]+'</b><p>'+S[i][1]+'</p><p class="muted">PRD ref: <code>prd.md &gt; '+S[i][2]+'</code></p>'}
+S.forEach(function(s,i){var b=document.createElement('button');b.textContent=(i+1)+'. '+s[0];b.onclick=function(){show(i)};st.appendChild(b)});
+show(0);
+</script>
+</main></body></html>
