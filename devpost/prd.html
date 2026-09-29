@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wild Wolves Agenda Bridge — PRD</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1c2330;--mute:#5d6778;--line:#dde2ea;--acc:#2f5fd0;--ok:#1f8a4c;--warn:#b26a00;--err:#b3261e}
+@media(prefers-color-scheme:dark){:root{--bg:#12151b;--card:#1b2029;--ink:#e8ecf3;--mute:#9aa5b8;--line:#2c3442;--acc:#7ea2ff;--ok:#4cc38a;--warn:#e0a040;--err:#ff8a80}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,Segoe UI,sans-serif;padding:24px 16px}
+main{max-width:860px;margin:0 auto}
+h1{margin:0 0 4px;font-size:1.7rem}h2{margin:32px 0 10px;font-size:1.2rem}
+.sub{color:var(--mute);margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:10px 0}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch}
+.step{flex:1 1 120px;min-width:0;background:var(--card);border:2px solid var(--line);border-radius:10px;padding:10px;cursor:pointer;text-align:left;font:inherit;color:inherit}
+.step b{display:block;color:var(--acc);font-size:.8rem}
+.step[aria-pressed=true]{border-color:var(--acc)}
+#detail{border-left:4px solid var(--acc)}
+#detail h3{margin:0 0 6px}
+.tag{display:inline-block;font-size:.75rem;padding:1px 8px;border-radius:99px;border:1px solid var(--line);color:var(--mute);margin-right:6px}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0;padding:10px 14px}
+summary{cursor:pointer;font-weight:600}
+ul{margin:8px 0 0;padding-left:20px}
+.state{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.state .card{margin:0}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.err{color:var(--err)}
+pre{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;overflow-x:auto;font-size:.85rem;margin:8px 0 0}
+.cols{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+svg{max-width:100%;height:auto}
+</style>
+</head>
+<body>
+<main>
+<h1>Wild Wolves Agenda Bridge</h1>
+<p class="sub">Product requirements · draft · you run it by hand and new Discord events show up in Outlook as tentative items.</p>
+
+<h2>The journey — click a step</h2>
+<div class="flow" id="flow"></div>
+<div class="card" id="detail"></div>
+
+<h2>The same journey as a diagram</h2>
+<div class="card">
+<svg viewBox="0 0 760 250" role="img" aria-label="Flow: run, read Discord next 7 days, check Outlook for same name and time, create tentative items, print list, accept or decline in Outlook">
+ <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+ <g fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--mute)">
+  <rect x="10" y="20" width="120" height="50" rx="8" style="fill:var(--card);stroke:var(--acc)"/>
+  <rect x="160" y="20" width="140" height="50" rx="8" style="fill:var(--card)"/>
+  <path d="M400 15 L470 45 L400 75 L330 45 Z" style="fill:var(--card);stroke:var(--warn)"/>
+  <rect x="500" y="20" width="120" height="50" rx="8" style="fill:var(--card)"/>
+  <rect x="640" y="20" width="110" height="50" rx="8" style="fill:var(--card)"/>
+  <rect x="500" y="150" width="250" height="50" rx="8" style="fill:var(--card);stroke:var(--ok)"/>
+  <rect x="160" y="150" width="200" height="50" rx="8" style="fill:var(--card)"/>
+  <path d="M130 45H158" marker-end="url(#a)"/><path d="M300 45H328" marker-end="url(#a)"/>
+  <path d="M470 45H498" marker-end="url(#a)"/><path d="M620 45H638" marker-end="url(#a)"/>
+  <path d="M695 70V150H752" style="display:none"/><path d="M695 70V110H625V148" marker-end="url(#a)"/>
+  <path d="M400 75V175H362" marker-end="url(#a)"/>
+ </g>
+ <g fill="currentColor" font-size="12" text-anchor="middle" style="color:var(--ink)">
+  <text x="70" y="42">You run it</text><text x="70" y="58">by hand</text>
+  <text x="230" y="42">Read Discord</text><text x="230" y="58">next 7 days</text>
+  <text x="400" y="42">In Outlook</text><text x="400" y="58">already?</text>
+  <text x="560" y="42">Create</text><text x="560" y="58">tentative item</text>
+  <text x="695" y="42">Print list</text><text x="695" y="58">of new events</text>
+  <text x="625" y="180">You accept or decline in Outlook</text>
+  <text x="260" y="172">Skip it</text><text x="260" y="188">(not shown)</text>
+  <text x="440" y="130" text-anchor="start" style="fill:var(--mute)">same name + date/time = yes</text>
+  <text x="480" y="98" style="fill:var(--mute)">no = new</text>
+ </g>
+</svg>
+</div>
+
+<h2>What "already exists" means</h2>
+<div class="cols">
+ <div class="card"><b class="err">Skipped</b><p>Same name <em>and</em> same date/time is already in Outlook.</p></div>
+ <div class="card"><b class="ok">New</b><p>Same name, different date (next week's "Game Night") counts as new.</p></div>
+</div>
+
+<h2>What you see on screen</h2>
+<div class="state">
+ <div class="card"><b class="ok">New events found</b><pre>New events:
+- Game Night  Thu 20:00
+- Tournament  Sat 18:30</pre></div>
+ <div class="card"><b class="warn">Nothing new</b><pre>No new events were found.</pre></div>
+ <div class="card"><b class="err">Not reachable</b><pre>Discord / Outlook are not available.</pre></div>
+</div>
+
+<h2>Behaviors and how we check them</h2>
+<details open><summary>Run on demand</summary><ul><li>One run does one full check, then ends.</li><li>No automatic schedule exists.</li></ul></details>
+<details><summary>Finding events (next 7 days)</summary><ul><li>Only events starting within 7 days of the run are considered.</li><li>Later events are not listed or added.</li></ul></details>
+<details><summary>Skipping events already in Outlook</summary><ul><li>Same name and date/time: not listed, not created again.</li><li>Same name, different date/time: new.</li><li>Running twice in a row creates no duplicates.</li></ul></details>
+<details><summary>Creating tentative Outlook items</summary><ul><li>Marked tentative.</li><li>Has title, date, time, description, and location where Discord provides them.</li><li>You can accept or decline it in Outlook.</li></ul></details>
+<details><summary>Result list</summary><ul><li>Lists each new event (name and date/time at minimum).</li><li>Skipped events are not shown.</li></ul></details>
+
+<h2>Now vs. later</h2>
+<div class="cols">
+ <div class="card"><b>Building now</b><ul><li>Manual run</li><li>Discord events, next 7 days</li><li>Duplicate check (name + date/time)</li><li>Tentative Outlook items</li><li>Result list and two messages</li></ul></div>
+ <div class="card"><b>Deferred</b><ul><li>Daily 20:00 run — can't be shown in a short demo</li><li>Looking further than 7 days</li><li>WhatsApp, email, more servers, conflict handling</li></ul></div>
+</div>
+<p class="sub">Open question (can wait for the build): if an event keeps its name but moves date, it currently counts as a new event.</p>
+</main>
+<script>
+var steps=[
+["Run it","You start the program yourself. There is no automatic schedule in the proof of concept.","One run does a full check, then ends."],
+["Read Discord","It reads the Wild Wolves scheduled events that start within the next 7 days from now.","Events later than 7 days are ignored."],
+["Check Outlook","For each event it looks for an Outlook item with the same name and the same date/time.","Matches are skipped and not shown. Same name on a different date is new."],
+["Create items","Each new event becomes a tentative Outlook item with title, date, time, description, and location.","Item is marked tentative and carries the event details."],
+["Print the list","The screen lists the new events found.","No new events: 'No new events were found.' Discord/Outlook down: 'Discord / Outlook are not available.'"],
+["Decide in Outlook","You open Outlook and accept or decline each tentative item.","The event is now (or is not) in your agenda. Running again creates no duplicates."]];
+var flow=document.getElementById('flow'),d=document.getElementById('detail');
+function show(i){
+ Array.prototype.forEach.call(flow.children,function(b,j){b.setAttribute('aria-pressed',i===j)});
+ d.innerHTML='<h3>'+(i+1)+'. '+steps[i][0]+'</h3><p>'+steps[i][1]+'</p><p><span class="tag">check</span>'+steps[i][2]+'</p>';
+}
+steps.forEach(function(s,i){var b=document.createElement('button');b.className='step';b.innerHTML='<b>Step '+(i+1)+'</b>'+s[0];b.onclick=function(){show(i)};flow.appendChild(b)});
+show(0);
+</script>
+</body>
+</html>
